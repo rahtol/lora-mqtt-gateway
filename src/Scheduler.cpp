@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2023-2026 Thomas Basler and others
  */
-#include "Scheduler.h"
+#define _SCHEDULER_CPP
+ #include "Scheduler.h"
 
 Scheduler scheduler;

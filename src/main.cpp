@@ -9,8 +9,7 @@
 #include "LoraTransceiver.h"
 #include "version.h"
 #include "WebApi.h"
-#include <TaskSchedulerDeclarations.h>
-#include "Scheduler.h"
+#include <Scheduler.h>
 
 namespace Lora_Mqtt_Gateway {
 
