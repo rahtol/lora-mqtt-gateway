@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2022-2026 Thomas Basler and others
  */
-#include "WebApi_ws_live.h"
+#include "WebApi.h"
 #include <AsyncJson.h>
 
 #undef TAG
@@ -159,12 +159,12 @@ void WebApiWsLiveClass::generateInverterChannelJsonResponse(JsonObject& invObj, 
         addField(chanObj, "YieldTotal", t.yieldtotal, "kWh", 3);
     }
 
-    auto invObj = invObj["INV"].to<JsonObject>();
-    addField(invObj, "Power DC", inv->ac_data.powerdc, "W", 1);
-    addField(invObj, "Yield Day", inv->ac_data.yieldday, "Wh", 0);
-    addField(invObj, "Yield Total", inv->ac_data.yieldtotal, "kWh", 3);
-    addField(invObj, "Temperature", inv->ac_data.temperature, "°C", 1);
-    addField(invObj, "Efficiency", inv->ac_data.efficiency, "%", 3);
+    auto INVObj = invObj["INV"].to<JsonObject>();
+    addField(INVObj, "Power DC", inv->ac_data.powerdc, "W", 1);
+    addField(INVObj, "Yield Day", inv->ac_data.yieldday, "Wh", 0);
+    addField(INVObj, "Yield Total", inv->ac_data.yieldtotal, "kWh", 3);
+    addField(INVObj, "Temperature", inv->ac_data.temperature, "°C", 1);
+    addField(INVObj, "Efficiency", inv->ac_data.efficiency, "%", 3);
 
     invObj["events"] = -1;
 }
@@ -195,7 +195,7 @@ void WebApiWsLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         auto serial = WebApi.parseSerialFromRequest(request);
 
         if (serial > 0) {
-            auto inv = Hoymiles.getInverterBySerial(serial);
+            auto inv = 0x116183777340 == serial ? &inverter_data[0] : nullptr;
             if (inv != nullptr) {
                 JsonObject invObject = invArray.add<JsonObject>();
                 generateInverterCommonJsonResponse(invObject, inv);
@@ -203,8 +203,8 @@ void WebApiWsLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
             }
         } else {
             // Loop all inverters
-            for (uint8_t i = 0; i < Hoymiles.getNumInverters(); i++) {
-                auto inv = Hoymiles.getInverterByPos(i);
+            for (uint8_t i = 0; i < INV_MAX_COUNT; i++) {
+                auto inv = &inverter_data[i];
                 if (inv == nullptr) {
                     continue;
                 }

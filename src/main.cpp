@@ -8,21 +8,23 @@
 #include "MqttSettings.h"
 #include "LoraTransceiver.h"
 #include "version.h"
+#include "WebApi.h"
+#include <TaskSchedulerDeclarations.h>
+#include "Scheduler.h"
 
 namespace Lora_Mqtt_Gateway {
 
-const char* version = "Project Lora_Mqtt_Gateway, Version 1.00, 01.08.2026 14:45";
+const char* version = "Project Lora_Mqtt_Gateway, Version 1.01, 09.08.2026 11:52";
 
 }
 
+
 // Create an AsyncWebServer object on port 80
-AsyncWebServer server(80);
+//AsyncWebServer server(80);
 AsyncWebSocket ws("/console");
 
 extern const char index_html[] asm("_binary_src_index_html_start");
 extern const uint8_t index_html_end[] asm("_binary_src_index_html_end");
-extern const char index1_html[] asm("_binary_src_index1_html_start");
-extern const uint8_t index1_html_end[] asm("_binary_src_index1_html_end");
 extern const char index2_html[] asm("_binary_src_index2_html_start");
 extern const uint8_t index2_html_end[] asm("_binary_src_index2_html_end");
 
@@ -31,37 +33,6 @@ int deviceID ()
     // currently the gateway acts as receiver only
     return 2;
 }
-
-// Replaces placeholder with button section in your web page
-String processor(const String& var){
-  //Serial.println(var);
-  if(var == "COUNTERPLACEHOLDER"){
-    String countervalues = "";
-    if (LoraTransceiver.get_mode() == 1) {
-      countervalues +=  "<h4>packets received: " + String(LoraTransceiver.get_no_received_packets()) + "</h4>";
-      countervalues +=  "<h4>packets missed: " + String(LoraTransceiver.get_no_misssed_packets()) + "</h4>";
-      countervalues +=  "<h4>packets corrupted: " + String(LoraTransceiver.get_no_corrupted_packets()) + "</h4>";
-    }
-    else if (LoraTransceiver.get_mode() == 2) {
-      countervalues +=  "<h4>packets sent: " + String(LoraTransceiver.get_no_sent_packets()) + "</h4>";
-    }
-    return countervalues;
-  }
-  else if (var == "BOOTTIMEANDDATE") {
-    return "<h4>Up since: " + NtpSettings.get_boottime_and_date() + "</h4>";
-  }
-  else if (var == "VERSION") {
-    return "<h4>" + String(Lora_Mqtt_Gateway::version) + "</h4>";
-  }
-  else if (var == "NOW") {
-    return "<h4> counter values at " + NtpSettings.getLocalTimeAndDate() + "</h4>";
-  }
-  else if (var == "DEVICEID") {
-    return NetworkSettings.deviceID();
-  }
-  return String();
-}
-
 
 void onWebsocketEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
 {
@@ -158,19 +129,14 @@ void setup()
 
     ArduinoOTA.begin();
 
-
-    // Route for root / web page
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(200, "text/html", LoraTransceiver.get_mode() == 1 ? index1_html : index2_html, processor);
-    });
-
     // Enable Websocket handling
-    server.addHandler(&ws);
+    WebApi._server.addHandler(&ws);
     ws.onEvent(std::bind(&onWebsocketEvent, _1, _2, _3, _4, _5, _6));
     MessageOutput.setWebsocket(&ws);
 
-    // Start server
-    server.begin();
+    // Initialize WebApi
+    MessageOutput.logf("Initialize WebApi... ");
+    WebApi.init(scheduler);
 
     // Initialize NTP
     MessageOutput.logf("Initialize NTP... ");
