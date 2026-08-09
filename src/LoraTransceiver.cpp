@@ -3,6 +3,7 @@
 #include <MessageOutput.h>
 #include "FifoBuffer.h"
 #include "MqttSettings.h"
+#include "InverterData.h"
 
 #define ss 12
 #define rst 14
@@ -12,29 +13,6 @@ unsigned t0 = 0;
 unsigned t1 = 0;
 
 FifoBufferClass<uint8_t> receivedPackets(8, 258);
-
-typedef struct _DC_data {
-    float voltage;
-    float current;
-    float power;
-    float yieldday;
-    float yieldtotal;
-    float irradiation;
-} DC_data;
-
-typedef struct _AC_data {
-    float voltage;
-    float current;
-    float power;
-    float powerdc;
-    float powerfactor;
-    float frequency;
-    float reactivepower;
-    float temperature;
-    float yieldday;
-    float yieldtotal;
-    float efficiency;
-} AC_data;
 
 float decode_uint16(uint8_t *data, int divisor) {
     uint16_t val = (data[0] << 8) | data[1];
@@ -220,8 +198,9 @@ void LoraTransceiverClass::loop() {
             }
             else
             {
-                DC_data dc_data[4];
-                AC_data ac_data;
+                InverterData *inv_data = &inverter_data[0];  // only one inverter supported for now
+                DC_data *dc_data = inv_data->dc_data;
+                AC_data &ac_data = inv_data->ac_data;
                 decode_statistics(packet + 7, dc_data, &ac_data);
 
                 ac_data.powerdc = dc_data[0].power + dc_data[1].power + dc_data[2].power + dc_data[3].power;
@@ -231,6 +210,8 @@ void LoraTransceiverClass::loop() {
 
                 publish_dc_data(dc_data);
                 publish_ac_data(&ac_data);
+
+                inv_data->t_lastUpdate = millis();
             }
         }
     }
