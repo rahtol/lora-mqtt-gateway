@@ -13,19 +13,11 @@
 
 namespace Lora_Mqtt_Gateway {
 
-const char* version = "Project Lora_Mqtt_Gateway, Version 1.01, 09.08.2026 11:52";
+const char* version = "Project Lora_Mqtt_Gateway, Version 1.01, 09.08.2026 16:12";
 
 }
 
-
-// Create an AsyncWebServer object on port 80
-//AsyncWebServer server(80);
 AsyncWebSocket ws("/console");
-
-extern const char index_html[] asm("_binary_src_index_html_start");
-extern const uint8_t index_html_end[] asm("_binary_src_index_html_end");
-extern const char index2_html[] asm("_binary_src_index2_html_start");
-extern const uint8_t index2_html_end[] asm("_binary_src_index2_html_end");
 
 int deviceID ()
 {
@@ -183,4 +175,6 @@ void loop()
   yield();
   LoraTransceiver.loop();
   yield();
+
+  scheduler.execute();
 }

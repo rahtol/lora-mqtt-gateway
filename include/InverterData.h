@@ -28,9 +28,26 @@ typedef struct _AC_data {
 
 class InverterData {
 public:
+    InverterData() : 
+        name("Garage"), 
+        serial("116183777340"), 
+        serial_u(0x116183777340), 
+        t_lastUpdate(0), 
+        last_seqnr(0xFFFFFFFF), 
+        last_packet_rssi(0),
+        no_received_packets(0),
+        no_misssed_packets(0),
+        no_corrupted_packets(0) {}
+
     String name;
     String serial;
+    uint64_t serial_u;
     unsigned long t_lastUpdate;
+    uint32_t last_seqnr;
+    int last_packet_rssi;
+    uint32_t no_received_packets;
+    uint32_t no_misssed_packets;
+    uint32_t no_corrupted_packets;
     DC_data dc_data[4];
     AC_data ac_data;
 };

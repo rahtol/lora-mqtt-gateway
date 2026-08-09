@@ -191,17 +191,28 @@ void LoraTransceiverClass::loop() {
             MessageOutput.logf("Received packet len='%d', seqnr='%d' with RSSI %d, SNR=%d", packetSize, seqnr, rssi, snr);
             MessageOutput.logf("Payload: %s", decode_payload_as_string(packet + 7, packetSize - 4).c_str());
 
+            InverterData *inv_data = &inverter_data[0];  // only one inverter supported for now
+            
+            inv_data->no_received_packets++;
             no_received_packets++;
+
             if (packetSize != 68) {
-                MessageOutput.logf("Packet format error: seqnr or len not found or in wrong order");
+                MessageOutput.logf("Packet corrupted: len mismatch, expected 68, got %d", packetSize);
                 no_corrupted_packets++;
+                inv_data->no_corrupted_packets++;
             }
             else
             {
-                InverterData *inv_data = &inverter_data[0];  // only one inverter supported for now
                 DC_data *dc_data = inv_data->dc_data;
                 AC_data &ac_data = inv_data->ac_data;
                 decode_statistics(packet + 7, dc_data, &ac_data);
+                inv_data->last_packet_rssi = rssi;
+                if (inv_data->last_seqnr != 0xFFFFFFFF && seqnr > inv_data->last_seqnr + 1U) {
+                    MessageOutput.logf("Packet loss detected: last_seqnr=%d, current_seqnr=%d", inv_data->last_seqnr, seqnr);
+                    no_misssed_packets += seqnr - inv_data->last_seqnr - 1U;
+                    inv_data->no_misssed_packets += seqnr - inv_data->last_seqnr - 1U;
+                }
+                inv_data->last_seqnr = seqnr;
 
                 ac_data.powerdc = dc_data[0].power + dc_data[1].power + dc_data[2].power + dc_data[3].power;
                 ac_data.yieldday = dc_data[0].yieldday + dc_data[1].yieldday + dc_data[2].yieldday + dc_data[3].yieldday;

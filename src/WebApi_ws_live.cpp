@@ -4,9 +4,10 @@
  */
 #include "WebApi.h"
 #include <AsyncJson.h>
+#include "MessageOutput.h"
 
 #undef TAG
-static const char* TAG = "webapi";
+//static const char* TAG = "webapi";
 
 #ifndef PIN_MAPPING_REQUIRED
 #define PIN_MAPPING_REQUIRED 0
@@ -27,6 +28,10 @@ void WebApiWsLiveClass::init(AsyncWebServer& server, Scheduler& scheduler)
     using std::placeholders::_4;
     using std::placeholders::_5;
     using std::placeholders::_6;
+
+    for (uint8_t i = 0; i < INV_MAX_COUNT; i++) {
+        _lastPublishStats[i] = 0;
+    }
 
     server.on("/api/livedata/status", HTTP_GET, static_cast<ArRequestHandlerFunction>(std::bind(&WebApiWsLiveClass::onLivedataStatus, this, _1)));
 
@@ -95,9 +100,9 @@ void WebApiWsLiveClass::sendDataTaskCb()
             _ws.textAll(buffer);
 
         } catch (const std::bad_alloc& bad_alloc) {
-            ESP_LOGE(TAG, "Call to /api/livedata/status temporarely out of resources. Reason: \"%s\".", bad_alloc.what());
+            MessageOutput.logf("ws://livedata temporarely out of resources. Reason: \"%s\".", bad_alloc.what());
         } catch (const std::exception& exc) {
-            ESP_LOGE(TAG, "Unknown exception in /api/livedata/status. Reason: \"%s\".", exc.what());
+            MessageOutput.logf("Unknown exception in ws://livedata. Reason: \"%s\".", exc.what());
         }
     }
 }
@@ -130,11 +135,11 @@ void WebApiWsLiveClass::generateInverterCommonJsonResponse(JsonObject& invObj, I
     invObj["limit_absolute"] = 1500.0;
     invObj["radio_stats"]["tx_request"] = 0;
     invObj["radio_stats"]["tx_re_request"] = 0;
-    invObj["radio_stats"]["rx_success"] = 0;
-    invObj["radio_stats"]["rx_fail_nothing"] = 0;
+    invObj["radio_stats"]["rx_success"] = inv->no_received_packets;
+    invObj["radio_stats"]["rx_fail_nothing"] = inv->no_misssed_packets;
     invObj["radio_stats"]["rx_fail_partial"] = 0;
-    invObj["radio_stats"]["rx_fail_corrupt"] = 0;
-    invObj["radio_stats"]["rssi"] = 0;
+    invObj["radio_stats"]["rx_fail_corrupt"] = inv->no_corrupted_packets;
+    invObj["radio_stats"]["rssi"] = inv->last_packet_rssi;
 }
 
 void WebApiWsLiveClass::generateInverterChannelJsonResponse(JsonObject& invObj, InverterData *inv)
@@ -151,7 +156,9 @@ void WebApiWsLiveClass::generateInverterChannelJsonResponse(JsonObject& invObj, 
     // Loop all channels
     for (auto &t : inv->dc_data) {
         int i = &t - inv->dc_data;
-        auto chanObj = dcObj[String(static_cast<uint8_t>(i+1))].to<JsonObject>();
+        auto chanObj = dcObj[String(static_cast<uint8_t>(i))].to<JsonObject>();
+        auto chanName = chanObj["name"].to<JsonObject>();
+        chanName["u"] = "";
         addField(chanObj, "Power", t.power, "W", 1);
         addField(chanObj, "Voltage", t.voltage, "V", 1);
         addField(chanObj, "Current", t.current, "A", 1);
@@ -161,8 +168,8 @@ void WebApiWsLiveClass::generateInverterChannelJsonResponse(JsonObject& invObj, 
 
     auto INVObj = invObj["INV"].to<JsonObject>();
     addField(INVObj, "Power DC", inv->ac_data.powerdc, "W", 1);
-    addField(INVObj, "Yield Day", inv->ac_data.yieldday, "Wh", 0);
-    addField(INVObj, "Yield Total", inv->ac_data.yieldtotal, "kWh", 3);
+    addField(INVObj, "YieldDay", inv->ac_data.yieldday, "Wh", 0);
+    addField(INVObj, "YieldTotal", inv->ac_data.yieldtotal, "kWh", 3);
     addField(INVObj, "Temperature", inv->ac_data.temperature, "°C", 1);
     addField(INVObj, "Efficiency", inv->ac_data.efficiency, "%", 3);
 
@@ -179,9 +186,9 @@ void WebApiWsLiveClass::addField(JsonObject& parent, const String& name, const f
 void WebApiWsLiveClass::onWebsocketEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len)
 {
     if (type == WS_EVT_CONNECT) {
-        ESP_LOGD(TAG, "Websocket: [%s][%" PRIu32 "] connect", server->url(), client->id());
+        MessageOutput.logf("Websocket: [%s][%" PRIu32 "] connect", server->url(), client->id());
     } else if (type == WS_EVT_DISCONNECT) {
-        ESP_LOGD(TAG, "Websocket: [%s][%" PRIu32 "] disconnect", server->url(), client->id());
+        MessageOutput.logf("Websocket: [%s][%" PRIu32 "] disconnect", server->url(), client->id());
     }
 }
 
@@ -195,7 +202,7 @@ void WebApiWsLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         auto serial = WebApi.parseSerialFromRequest(request);
 
         if (serial > 0) {
-            auto inv = 0x116183777340 == serial ? &inverter_data[0] : nullptr;
+            auto inv = inverter_data[0].serial_u == serial ? &inverter_data[0] : nullptr;
             if (inv != nullptr) {
                 JsonObject invObject = invArray.add<JsonObject>();
                 generateInverterCommonJsonResponse(invObject, inv);
@@ -219,10 +226,10 @@ void WebApiWsLiveClass::onLivedataStatus(AsyncWebServerRequest* request)
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
     } catch (const std::bad_alloc& bad_alloc) {
-        ESP_LOGE(TAG, "Call to /api/livedata/status temporarely out of resources. Reason: \"%s\".", bad_alloc.what());
+        MessageOutput.logf("Call to /api/livedata/status temporarely out of resources. Reason: \"%s\".", bad_alloc.what());
         WebApi.sendTooManyRequests(request);
     } catch (const std::exception& exc) {
-        ESP_LOGE(TAG, "Unknown exception in /api/livedata/status. Reason: \"%s\".", exc.what());
+        MessageOutput.logf("Unknown exception in /api/livedata/status. Reason: \"%s\".", exc.what());
         WebApi.sendTooManyRequests(request);
     }
 }
