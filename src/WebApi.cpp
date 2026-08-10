@@ -60,6 +60,10 @@ void WebApiClass::init(Scheduler& scheduler)
       request->send(200, "text/html", index1_html, processor);
     });
 
+    _server.on("/api/i18n/languages", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(200, "application/json", "[]");
+    });
+
     _webApiWsLive.init(_server, scheduler);
 
     _server.begin();
