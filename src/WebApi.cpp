@@ -58,6 +58,7 @@ void WebApiClass::init(Scheduler& scheduler)
 
     _webApiWsLive.init(_server, scheduler);
     _webApiWebApp.init(_server, scheduler);
+    _webApiSysstatus.init(_server, scheduler);
 
     _server.begin();
 }

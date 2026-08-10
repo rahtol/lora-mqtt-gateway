@@ -2,6 +2,7 @@
 
 #include "WebApi_ws_live.h"
 #include "WebApi_webapp.h"
+#include "WebApi_sysstatus.h"
 #include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
 #include <TaskSchedulerDeclarations.h>
@@ -25,6 +26,7 @@ private:
 
     WebApiWsLiveClass _webApiWsLive;
     WebApiWebappClass _webApiWebApp;
+    WebApiSysstatusClass _webApiSysstatus;
 };
 
 extern WebApiClass WebApi;
