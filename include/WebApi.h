@@ -1,6 +1,7 @@
 #pragma once
 
 #include "WebApi_ws_live.h"
+#include "WebApi_webapp.h"
 #include <AsyncJson.h>
 #include <ESPAsyncWebServer.h>
 #include <TaskSchedulerDeclarations.h>
@@ -23,6 +24,7 @@ public:
 private:
 
     WebApiWsLiveClass _webApiWsLive;
+    WebApiWebappClass _webApiWebApp;
 };
 
 extern WebApiClass WebApi;

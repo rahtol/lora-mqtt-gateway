@@ -11,9 +11,6 @@
 #undef TAG
 static const char* TAG = "webapi";
 
-extern const char index1_html[] asm("_binary_src_index1_html_start");
-extern const uint8_t index1_html_end[] asm("_binary_src_index1_html_end");
-
 #define HTTP_PORT 80
 
 
@@ -55,16 +52,12 @@ WebApiClass::WebApiClass()
 
 void WebApiClass::init(Scheduler& scheduler)
 {
-    // Route for root / web page
-    _server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(200, "text/html", index1_html, processor);
-    });
-
     _server.on("/api/i18n/languages", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(200, "application/json", "[]");
     });
 
     _webApiWsLive.init(_server, scheduler);
+    _webApiWebApp.init(_server, scheduler);
 
     _server.begin();
 }

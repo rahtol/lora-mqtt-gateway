@@ -13,7 +13,7 @@
 
 namespace Lora_Mqtt_Gateway {
 
-const char* version = "Project Lora_Mqtt_Gateway, Version 1.02, 10.08.2026 09:54";
+const char* version = "Project Lora_Mqtt_Gateway, Version 1.03, 10.08.2026 16:37";
 
 }
 
