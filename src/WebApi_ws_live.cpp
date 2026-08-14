@@ -166,12 +166,12 @@ void WebApiWsLiveClass::generateInverterChannelJsonResponse(JsonObject& invObj, 
         addField(chanObj, "YieldTotal", t.yieldtotal, "kWh", 3);
     }
 
-    auto INVObj = invObj["INV"].to<JsonObject>();
-    addField(INVObj, "Power DC", inv->ac_data.powerdc, "W", 1);
-    addField(INVObj, "YieldDay", inv->ac_data.yieldday, "Wh", 0);
-    addField(INVObj, "YieldTotal", inv->ac_data.yieldtotal, "kWh", 3);
-    addField(INVObj, "Temperature", inv->ac_data.temperature, "°C", 1);
-    addField(INVObj, "Efficiency", inv->ac_data.efficiency, "%", 3);
+    auto INVObj0 = invObj["INV"]["0"].to<JsonObject>();
+    addField(INVObj0, "Power DC", inv->ac_data.powerdc, "W", 1);
+    addField(INVObj0, "YieldDay", inv->ac_data.yieldday, "Wh", 0);
+    addField(INVObj0, "YieldTotal", inv->ac_data.yieldtotal, "kWh", 3);
+    addField(INVObj0, "Temperature", inv->ac_data.temperature, "°C", 1);
+    addField(INVObj0, "Efficiency", inv->ac_data.efficiency, "%", 3);
 
     invObj["events"] = -1;
 }
