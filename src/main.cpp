@@ -10,6 +10,8 @@
 #include "version.h"
 #include "WebApi.h"
 #include <Scheduler.h>
+#include <LittleFS.h>
+#include "Configuration.h"
 
 namespace Lora_Mqtt_Gateway {
 
@@ -77,6 +79,22 @@ void setup()
 
     Serial.begin(115200);
     MessageOutput.logf(Lora_Mqtt_Gateway::version);
+    // Initialize file system
+
+    MessageOutput.logf("Mounting FS...");
+    if (!LittleFS.begin(false)) { // Do not format if mount failed
+        ESP_LOGW(TAG, "Failed mounting FS... Trying to format...");
+        const bool success = LittleFS.begin(true);
+        MessageOutput.logf("FS reformat %s", success ? "successful" : "failed");
+    }
+
+    // Read configuration values
+    MessageOutput.logf("Reading configuration...");
+    Configuration.init(scheduler);
+    if (!Configuration.read()) {
+        bool success = Configuration.write();
+        MessageOutput.logf("Failed to read configuration. New default configuration written %s", success ? "successful" : "failed");
+    }
 
     // Initialize WiFi
     MessageOutput.logf("Initialize Network... ");

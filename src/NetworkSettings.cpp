@@ -118,5 +118,11 @@ bool NetworkSettingsClass::isConnected()
     return WiFi.localIP()[0] != 0;
 }
 
+String NetworkSettingsClass::getApName()
+{
+    String apName = "LoraGateway-";
+    apName += deviceID();
+    return apName;
+}
 
 NetworkSettingsClass NetworkSettings;

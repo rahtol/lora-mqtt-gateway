@@ -43,6 +43,8 @@ public:
     bool onEvent(NetworkEventCb cbEvent, network_event event = network_event::NETWORK_EVENT_MAX);
     void raiseEvent(network_event event);
 
+    String getApName();
+
 private:
     void NetworkEvent(WiFiEvent_t event);
     int connectTimeoutTimer = 0;
