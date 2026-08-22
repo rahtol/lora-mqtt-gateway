@@ -7,6 +7,11 @@ MqttSettingsClass::MqttSettingsClass()
 {
 }
 
+void MqttSettingsClass::performReconnect()
+{
+    // TODO
+};
+
 void MqttSettingsClass::init(String deviceID)
 {
     _mqttState = mqtt_idle;
@@ -102,6 +107,11 @@ String MqttSettingsClass::getPrefix()
 {
 //    return "solar/116183777340/";
     return "mqtt/1/solar/116183777340/";
+}
+
+String MqttSettingsClass::getClientId()
+{
+    return clientId;
 }
 
 void MqttSettingsClass::publish(const String& subtopic, const String& payload)

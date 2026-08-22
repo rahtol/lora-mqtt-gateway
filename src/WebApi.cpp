@@ -7,6 +7,7 @@
 #include "LoraTransceiver.h"
 #include "version.h"
 #include "NtpSettings.h"
+#include "Configuration.h"
 
 #undef TAG
 static const char* TAG = "webapi";
@@ -59,6 +60,8 @@ void WebApiClass::init(Scheduler& scheduler)
     _webApiWsLive.init(_server, scheduler);
     _webApiWebApp.init(_server, scheduler);
     _webApiSysstatus.init(_server, scheduler);
+    _webApiMqtt.init(_server, scheduler);
+    _webApiNetwork.init(_server, scheduler);
 
     _server.begin();
 }
@@ -73,6 +76,18 @@ void WebApiClass::sendTooManyRequests(AsyncWebServerRequest* request)
     auto response = request->beginResponse(429, asyncsrv::T_text_plain, "Too Many Requests");
     response->addHeader(asyncsrv::T_retry_after, "60");
     request->send(response);
+}
+
+void WebApiClass::writeConfig(JsonVariant& retMsg, const WebApiError code, const String& message)
+{
+    if (!Configuration.write()) {
+        retMsg["message"] = "Write failed!";
+        retMsg["code"] = WebApiError::GenericWriteFailed;
+    } else {
+        retMsg["type"] = "success";
+        retMsg["message"] = message;
+        retMsg["code"] = code;
+    }
 }
 
 bool WebApiClass::parseRequestData(AsyncWebServerRequest* request, AsyncJsonResponse* response, JsonDocument& json_document)

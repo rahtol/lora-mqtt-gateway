@@ -64,6 +64,7 @@ enum WebApiError {
     MqttLwtQos,
     MqttClientIdLength,
     MqttHassTopicTrailingSlash,
+    MqttTopicChangeNotSupported,
 
     NetworkBase = 8000,
     NetworkIpInvalid,

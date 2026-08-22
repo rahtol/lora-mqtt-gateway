@@ -12,6 +12,7 @@ public:
 
     MqttSettingsClass();
     void init(String macAddress);
+    void performReconnect();
     void loop();
 
     bool isConnected();
@@ -20,6 +21,7 @@ public:
     void onMessageCallback (OnMessageCallback callback);
 
     String getPrefix();
+    String getClientId();
 
 private:
     typedef enum MqttState_t {
